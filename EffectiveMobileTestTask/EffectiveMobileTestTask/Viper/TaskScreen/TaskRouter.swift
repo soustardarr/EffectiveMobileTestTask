@@ -17,13 +17,16 @@ protocol TaskRouterInput {
 final class TaskRouter: TaskRouterInput {
 
     weak var viewController: UIViewController?
-    
+    weak var presenter: TaskPresenter?
+
     func openDetailScreen(with task: Task) {
-        viewController?.navigationController?.pushViewController(DetaillViewController(task: task), animated: true)
+        let detailVC = DetailAssembly.assemble(with: task, output: presenter)
+        viewController?.navigationController?.pushViewController(detailVC, animated: true)
     }
     
     func openDetailScreen() {
-        viewController?.navigationController?.pushViewController(DetaillViewController(), animated: true)
+        let detailVC = DetailAssembly.assemble(output: presenter)
+        viewController?.navigationController?.pushViewController(detailVC, animated: true)
     }
 
     func presentAlert(_ text: String) {

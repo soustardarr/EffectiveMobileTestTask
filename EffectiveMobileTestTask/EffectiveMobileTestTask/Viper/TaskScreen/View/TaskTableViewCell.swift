@@ -12,7 +12,7 @@ protocol TaskTableViewCellDelegate: AnyObject {
     func deleteTask(_ task: Task)
     func shareTask(_ task: Task)
     func editTask(_ task: Task)
-    func changeTaskStatus(_ task: Task)
+    func changeTaskStatus(_ task: Task?)
 }
 
 final class TaskTableViewCell: BaseTableViewCell {
@@ -68,6 +68,7 @@ final class TaskTableViewCell: BaseTableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupView()
         setupContraints()
+        setupGestures()
         let interaction = UIContextMenuInteraction(delegate: self)
         self.addInteraction(interaction)
     }
@@ -102,22 +103,45 @@ final class TaskTableViewCell: BaseTableViewCell {
         }
     }
 
+    private func setupGestures() {
+        let changeStatusGesture = UITapGestureRecognizer(target: self, action: #selector(changeStatusTask))
+        statusIconView.addGestureRecognizer(changeStatusGesture)
+    }
+
+
+    @objc
+    private func changeStatusTask() {
+        task?.isCompleted.toggle()
+        updateTaskAppearance()
+        delegate?.changeTaskStatus(task)
+    }
+
+
     func configure(with task: Task) {
         self.task = task
         titleLabel.text = task.title
+        titleLabel.attributedText = nil
         descriptionLabel.text = task.description
         dateLabel.text = task.date
+        updateTaskAppearance()
+    }
+
+    private func updateTaskAppearance() {
+        guard let task = task else { return }
         statusIconView.image = UIImage(systemName: task.isCompleted ? "checkmark.circle" : "circle")
         statusIconView.tintColor = task.isCompleted ? .yellow : .gray
-
         titleLabel.textColor = task.isCompleted ? .systemGray : .white
         descriptionLabel.textColor = task.isCompleted ? .systemGray : .white
-        let attributeString: NSMutableAttributedString =  NSMutableAttributedString(string: task.title)
+        titleLabel.attributedText = nil
+        let attributeString: NSMutableAttributedString = NSMutableAttributedString(string: task.title)
+        attributeString.removeAttribute(.strikethroughStyle, range: NSMakeRange(0, attributeString.length))
         if task.isCompleted {
             attributeString.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: NSMakeRange(0, attributeString.length))
         }
+
         titleLabel.attributedText = attributeString
     }
+
 }
 
 
@@ -135,8 +159,9 @@ extension TaskTableViewCell: UIContextMenuInteractionDelegate {
 
     func contextMenuInteraction(_ interaction: UIContextMenuInteraction, configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
 
-        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
-            guard let task = self.task else { return UIMenu()}
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [ weak self ] _ in
+            guard let self else { return UIMenu() }
+            guard let task = task else { return UIMenu()}
             let editAction = UIAction(title: "Редактировать", image: UIImage(named: "edit")) { _ in
                 self.delegate?.editTask(task)
             }

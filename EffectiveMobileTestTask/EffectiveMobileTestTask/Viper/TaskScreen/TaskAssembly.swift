@@ -18,6 +18,7 @@ final class TaskAssembly {
         interactor.output = presenter
         view.output = presenter
         router.viewController = view
+        router.presenter = presenter
         return view
     }
 }

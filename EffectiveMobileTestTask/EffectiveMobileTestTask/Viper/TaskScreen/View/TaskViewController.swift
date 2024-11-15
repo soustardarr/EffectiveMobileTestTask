@@ -10,6 +10,7 @@ import UIKit
 protocol TaskViewInput: AnyObject {
     var output: TaskViewOutput? { get set }
     func displayTasks(_ tasks: [Task])
+    func addTask(_ task: Task)
 }
 
 protocol TaskViewOutput: AnyObject {
@@ -28,19 +29,20 @@ final class TaskViewController: UIViewController, TaskViewInput {
     private enum Section {
         case main
     }
-    private var dataSource: UITableViewDiffableDataSource<Section, Int>?
+    private var dataSource: UITableViewDiffableDataSource<Section, UUID>?
     private var entities: [Task] = [
-        Task(id: 1, title: "Задача 1", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: true),
-        Task(id: 2, title: "Задача 1", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: false),
-        Task(id: 3, title: "Задача 1", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: true),
-        Task(id: 4, title: "Задача 1", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: false)
+        Task(id: 1, title: "Задача", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: true),
+        Task(id: 2, title: "ааааа", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: false),
+        Task(id: 3, title: "бббб", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: true),
+        Task(id: 4, title: "ссссс", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: false)
     ] {
         didSet {
             countTaskLabel.text = "\(entities.count) Задач"
+            updateSnapshot()
         }
     }
 
-    private var searchController = UISearchController()
+    private var searchController: UISearchController!
     private lazy var tableView = UITableView(frame: .zero, style: .plain)
 
     private lazy var bottomBarView = make(UIView()) { view in
@@ -73,6 +75,9 @@ final class TaskViewController: UIViewController, TaskViewInput {
     //MARK: - life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        let searchResultsController = SearchResultsViewController()
+        searchResultsController.delegate = self
+        searchController = UISearchController(searchResultsController: searchResultsController)
         setupNavBar()
         setupTableView()
         setupView()
@@ -88,6 +93,14 @@ final class TaskViewController: UIViewController, TaskViewInput {
         updateSnapshot()
     }
 
+    func addTask(_ task: Task) {
+        if let index = entities.firstIndex(where: { $0.id == task.id }) {
+            entities[index] = task
+        } else {
+            entities.insert(task, at: 0)
+        }
+    }
+
     private func setupView() {
         view.backgroundColor = .black
         view.addSubview(tableView)
@@ -99,7 +112,7 @@ final class TaskViewController: UIViewController, TaskViewInput {
     private func setupTableView() {
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.backgroundColor = .clear
+        tableView.backgroundColor = .black
         tableView.separatorStyle = .none
         tableView.register(
             TaskTableViewCell.self,
@@ -118,7 +131,8 @@ final class TaskViewController: UIViewController, TaskViewInput {
 
     private func setupConstrainsts() {
         tableView.snp.makeConstraints { make in
-            make.horizontalEdges.bottom.equalToSuperview()
+            make.horizontalEdges.equalToSuperview()
+            make.bottom.equalTo(bottomBarView.snp.top)
             make.top.equalTo(view.safeAreaLayoutGuide)
         }
 
@@ -152,26 +166,22 @@ final class TaskViewController: UIViewController, TaskViewInput {
         searchTextField.clearButtonMode = .never
         searchController.searchBar.delegate = self
     }
-
-
-    // MARK: - Actions
-    @objc private func microphoneButtonTapped() {
-        print("Микрофон нажат")
-    }
 }
 
 // MARK: - searchbar delegate
 extension TaskViewController: UISearchBarDelegate {
+
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        print("Кнопка отмены нажата")
+        updateSnapshot()
     }
 
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        print("Текст изменился на: \(searchText)")
-    }
+        let filteredEntities = entities.filter { task in
+            task.title.lowercased().contains(searchText.lowercased())
+        }
 
-    func searchBar(_ searchBar: UISearchBar, selectedScopeButtonIndexDidChange selectedScope: Int) {
-        print("Изменен выбранный сегмент на: \(selectedScope)")
+        let searchResultsVC = searchController.searchResultsController as? SearchResultsViewController
+        searchResultsVC?.updateResults(with: filteredEntities)
     }
 }
 
@@ -185,18 +195,19 @@ extension TaskViewController: UITableViewDelegate {
 // MARK: - data source
 extension TaskViewController {
     private func setupDataSource() {
-        dataSource = UITableViewDiffableDataSource<Section, Int>(tableView: tableView) { (tableView, indexPath, id) -> UITableViewCell? in
+        dataSource = UITableViewDiffableDataSource<Section, UUID>(tableView: tableView) { [ weak self ] tableView, indexPath, _ in
+            guard let self else { return UITableViewCell() }
             let cell = tableView.dequeueReusableCell(withIdentifier: TaskTableViewCell.reuseIdentifier, for: indexPath) as! TaskTableViewCell
-            guard let task = self.entities.first(where: { $0.id == id }) else { return nil }
+            let task = self.entities[indexPath.row]
             cell.configure(with: task)
             cell.delegate = self
             return cell
         }
     }
     private func updateSnapshot() {
-        var snapshot = NSDiffableDataSourceSnapshot<Section, Int>()
+        var snapshot = NSDiffableDataSourceSnapshot<Section, UUID>()
         snapshot.appendSections([.main])
-        snapshot.appendItems(entities.map { $0.id })
+        snapshot.appendItems(entities.map { $0.uuid })
         dataSource?.apply(snapshot, animatingDifferences: true)
     }
 }
@@ -204,8 +215,18 @@ extension TaskViewController {
 
 // MARK: - cell delegate
 extension TaskViewController: TaskTableViewCellDelegate {
+    func changeTaskStatus(_ task: Task?) {
+        guard let task = task else { return }
+        if let index = entities.firstIndex(where: { $0.id == task.id }) {
+            entities[index] = task
+        } else {
+            entities.append(task)
+        }
+    }
+    
     func deleteTask(_ task: Task) {
         output?.deleteTask(with: task)
+        entities.removeAll(where: { $0.id == task.id })
     }
     
     func shareTask(_ task: Task) {
@@ -214,5 +235,29 @@ extension TaskViewController: TaskTableViewCellDelegate {
     
     func editTask(_ task: Task) {
         output?.openDetailScreen(with: task)
+    }
+}
+
+extension TaskViewController: SearchResultsViewControllerDelegate {
+    func changeTaskStatusFromSearchResultsVC(_ task: Task) {
+        if let index = entities.firstIndex(where: { $0.uuid == task.uuid }) {
+            entities.remove(at: index)
+            entities.insert(task, at: index)
+        } else {
+            entities.append(task)
+        }
+    }
+    
+    func shareTaskFromSearchResultsVC(_ task: Task) {
+        output?.shareTask(with: task)
+    }
+    
+    func editTaskFromSearchResultsVC(_ task: Task) {
+        output?.openDetailScreen(with: task)
+    }
+    
+    func deleteTaskFromSearchResultsVC(_ task: Task) {
+        output?.deleteTask(with: task)
+        entities.removeAll(where: { $0.uuid == task.uuid })
     }
 }

@@ -69,3 +69,9 @@ extension TaskPresenter: TaskInteractorOutput {
         view.displayTasks(tasks)
     }
 }
+
+extension TaskPresenter: DetailRouterOutput {
+    func addTask(with task: Task) {
+        view.addTask(task)
+    }
+}

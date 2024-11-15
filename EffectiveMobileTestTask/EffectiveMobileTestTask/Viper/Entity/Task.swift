@@ -9,9 +9,10 @@ import Foundation
 
 
 struct Task {
-    let id: Int
+    var id: Int?
+    let uuid = UUID()
     let title: String
     let description: String
     let date: String
-    let isCompleted: Bool
+    var isCompleted: Bool
 }
