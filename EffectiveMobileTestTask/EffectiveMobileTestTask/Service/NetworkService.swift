@@ -21,6 +21,11 @@ protocol NetworkServiceProtocol {
 final class NetworkService: NetworkServiceProtocol {
 
     private let baseURL = "https://dummyjson.com/todos"
+    private let session: URLSession
+
+    init(session: URLSession = URLSession.shared) {
+        self.session = session
+    }
 
     func fetchData(completion: @escaping (Result<[Task], any Error>) -> Void) {
         guard let url = URL(string: baseURL) else {
@@ -30,7 +35,7 @@ final class NetworkService: NetworkServiceProtocol {
 
         let request = URLRequest(url: url)
 
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        session.dataTask(with: request) { data, response, error in
             if let error = error {
                 DispatchQueue.main.async {
                     completion(.failure(error))
