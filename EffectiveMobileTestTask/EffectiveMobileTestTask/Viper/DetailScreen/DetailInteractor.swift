@@ -9,7 +9,8 @@ import Foundation
 
 protocol DetailInteractorInput: AnyObject {
     var output: DetailInteractorOutput? { get set }
-    func deleteTask(_ task: Task)
+    func addTask(_ task: Task)
+    func updateTask(_ task: Task, uuid: UUID)
 }
 
 protocol DetailInteractorOutput: AnyObject {
@@ -21,7 +22,32 @@ final class DetailInteractor: DetailInteractorInput {
 
     var output: DetailInteractorOutput?
 
-    func deleteTask(_ task: Task) {
-        // запрос в бд
+    private var coreDataService: CoreDataServiceProtocol
+
+    init(coreDataService: CoreDataServiceProtocol = ServiceLocator.shared.resolve()) {
+        self.coreDataService = coreDataService
+    }
+
+    func addTask(_ task: Task) {
+        coreDataService.addTask(task) { result in
+            switch result {
+            case .success:
+                print(" успешное добавление в бд ")
+
+            case .failure(let error):
+                print("ошибка добавления задачи \(error)")
+            }
+        }
+    }
+
+    func updateTask(_ task: Task, uuid: UUID) {
+        coreDataService.updateTask(task, uuid: uuid) { result in
+            switch result {
+            case .success:
+                print("успешное изменения таски в бд")
+            case .failure(let error):
+                print("произошла ошибка изменения таски в бд \(error)")
+            }
+        }
     }
 }

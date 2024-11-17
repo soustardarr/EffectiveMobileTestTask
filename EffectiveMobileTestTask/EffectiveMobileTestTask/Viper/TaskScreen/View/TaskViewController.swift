@@ -10,7 +10,7 @@ import UIKit
 protocol TaskViewInput: AnyObject {
     var output: TaskViewOutput? { get set }
     func displayTasks(_ tasks: [Task])
-    func addTask(_ task: Task)
+    func addTask(_ task: Task, oldUUID: UUID)
 }
 
 protocol TaskViewOutput: AnyObject {
@@ -18,6 +18,7 @@ protocol TaskViewOutput: AnyObject {
     func openDetailScreen()
     func deleteTask(with task: Task)
     func shareTask(with task: Task)
+    func updateTask(with task: Task)
     func viewDidLoad()
 }
 
@@ -30,12 +31,7 @@ final class TaskViewController: UIViewController, TaskViewInput {
         case main
     }
     private var dataSource: UITableViewDiffableDataSource<Section, UUID>?
-    private var entities: [Task] = [
-        Task(id: 1, title: "Задача", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: true),
-        Task(id: 2, title: "ааааа", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: false),
-        Task(id: 3, title: "бббб", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: true),
-        Task(id: 4, title: "ссссс", description: "Погулять с собакой и сходить в зал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыбазал рыбы рыба рыба рыба", date: "02/20/20", isCompleted: false)
-    ] {
+    private var entities = [Task]() {
         didSet {
             countTaskLabel.text = "\(entities.count) Задач"
             updateSnapshot()
@@ -93,8 +89,8 @@ final class TaskViewController: UIViewController, TaskViewInput {
         updateSnapshot()
     }
 
-    func addTask(_ task: Task) {
-        if let index = entities.firstIndex(where: { $0.id == task.id }) {
+    func addTask(_ task: Task, oldUUID: UUID) {
+        if let index = entities.firstIndex(where: { $0.uuid == oldUUID }) {
             entities[index] = task
         } else {
             entities.insert(task, at: 0)
@@ -217,8 +213,9 @@ extension TaskViewController {
 extension TaskViewController: TaskTableViewCellDelegate {
     func changeTaskStatus(_ task: Task?) {
         guard let task = task else { return }
-        if let index = entities.firstIndex(where: { $0.id == task.id }) {
+        if let index = entities.firstIndex(where: { $0.uuid == task.uuid }) {
             entities[index] = task
+            output?.updateTask(with: task)
         } else {
             entities.append(task)
         }
@@ -226,7 +223,7 @@ extension TaskViewController: TaskTableViewCellDelegate {
     
     func deleteTask(_ task: Task) {
         output?.deleteTask(with: task)
-        entities.removeAll(where: { $0.id == task.id })
+        entities.removeAll(where: { $0.uuid == task.uuid })
     }
     
     func shareTask(_ task: Task) {
@@ -243,6 +240,7 @@ extension TaskViewController: SearchResultsViewControllerDelegate {
         if let index = entities.firstIndex(where: { $0.uuid == task.uuid }) {
             entities.remove(at: index)
             entities.insert(task, at: index)
+            output?.updateTask(with: task)
         } else {
             entities.append(task)
         }

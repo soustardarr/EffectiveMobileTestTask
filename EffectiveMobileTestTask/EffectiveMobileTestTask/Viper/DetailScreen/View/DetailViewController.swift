@@ -12,7 +12,9 @@ protocol DetailViewInput: AnyObject {
 }
 protocol DetailViewOutput: AnyObject {
     func saveTask(_ task: Task)
-    func popViewController(with task: Task)
+    func updateTask(_ task: Task, uuid: UUID)
+    func popViewController(with task: Task, oldUUID: UUID)
+    func presentAlert(with title: String, message: String)
 }
 
 final class DetailViewController: UIViewController, DetailViewInput {
@@ -42,7 +44,7 @@ final class DetailViewController: UIViewController, DetailViewInput {
         super.init(nibName: nil, bundle: nil)
         titleTextField.text = task?.title
         self.dateLabel.text = task?.date
-        textView.configure(text: task?.description ?? "")
+        textView.configure(text: task?.descriptionText ?? "")
     }
     
     required init?(coder: NSCoder) {
@@ -67,7 +69,7 @@ final class DetailViewController: UIViewController, DetailViewInput {
         guard task == nil else { return }
         let date = Date()
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MM/dd/yy"
+        dateFormatter.dateFormat = "dd/MM/yy"
         dateLabel.text = dateFormatter.string(from: date)
     }
 
@@ -102,11 +104,19 @@ final class DetailViewController: UIViewController, DetailViewInput {
             let title = titleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty,
             let text = textView.text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty
         else {
-            //            роутер покажи алерт
+            output?.presentAlert(with: "ошибка", message: "заполни заголовок и описание")
             return
         }
-        let task = Task(id: task?.id, title: title, description: text, date: dateLabel.text!, isCompleted: task?.isCompleted ?? false)
-        output?.saveTask(task)
-        output?.popViewController(with: task)
+
+        let newTask = Task(id: task?.id, uuid: UUID(), title: title, descriptionText: text, date: dateLabel.text!, completed: task?.completed ?? false)
+
+        if let task = self.task {
+            output?.updateTask(newTask, uuid: task.uuid)
+        } else {
+            output?.saveTask(newTask)
+        }
+        output?.popViewController(with: newTask, oldUUID: task?.uuid ?? newTask.uuid)
     }
+
+
 }

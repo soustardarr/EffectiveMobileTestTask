@@ -111,7 +111,7 @@ final class TaskTableViewCell: BaseTableViewCell {
 
     @objc
     private func changeStatusTask() {
-        task?.isCompleted.toggle()
+        task?.completed.toggle()
         updateTaskAppearance()
         delegate?.changeTaskStatus(task)
     }
@@ -120,26 +120,26 @@ final class TaskTableViewCell: BaseTableViewCell {
     func configure(with task: Task) {
         self.task = task
         titleLabel.text = task.title
-        titleLabel.attributedText = nil
-        descriptionLabel.text = task.description
+//        titleLabel.attributedText = nil
+        descriptionLabel.text = task.descriptionText
         dateLabel.text = task.date
         updateTaskAppearance()
     }
 
     private func updateTaskAppearance() {
         guard let task = task else { return }
-        statusIconView.image = UIImage(systemName: task.isCompleted ? "checkmark.circle" : "circle")
-        statusIconView.tintColor = task.isCompleted ? .yellow : .gray
-        titleLabel.textColor = task.isCompleted ? .systemGray : .white
-        descriptionLabel.textColor = task.isCompleted ? .systemGray : .white
-        titleLabel.attributedText = nil
-        let attributeString: NSMutableAttributedString = NSMutableAttributedString(string: task.title)
-        attributeString.removeAttribute(.strikethroughStyle, range: NSMakeRange(0, attributeString.length))
-        if task.isCompleted {
-            attributeString.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: NSMakeRange(0, attributeString.length))
-        }
-
-        titleLabel.attributedText = attributeString
+        statusIconView.image = UIImage(systemName: task.completed ? "checkmark.circle" : "circle")
+        statusIconView.tintColor = task.completed ? .yellow : .gray
+        titleLabel.textColor = task.completed ? .systemGray : .white
+        descriptionLabel.textColor = task.completed ? .systemGray : .white
+//        titleLabel.attributedText = nil
+//        let attributeString: NSMutableAttributedString = NSMutableAttributedString(string: task.title)
+//        attributeString.removeAttribute(.strikethroughStyle, range: NSMakeRange(0, attributeString.length))
+//        if task.completed {
+//            attributeString.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: NSMakeRange(0, attributeString.length))
+//        }
+//
+//        titleLabel.attributedText = attributeString
     }
 
 }
@@ -182,6 +182,7 @@ extension TaskTableViewCell: UIContextMenuInteractionDelegate {
         contentView.backgroundColor = .textFieldBackround
         statusIconView.isHidden = true
         separatorView.isHidden = true
+        dateLabel.textColor = UIColor(named: "whiteColor")
         labelsStackviewLeadingConstraint?.update(inset: 16)
         labelsStackviewTrailingConstraint?.update(inset: 16)
     }
@@ -190,6 +191,7 @@ extension TaskTableViewCell: UIContextMenuInteractionDelegate {
         contentView.backgroundColor = .black
         statusIconView.isHidden = false
         separatorView.isHidden = false
+        dateLabel.textColor = UIColor(named: "textFieldBackround")
         labelsStackviewLeadingConstraint?.update(inset: 52)
         labelsStackviewTrailingConstraint?.update(inset: 20)
     }

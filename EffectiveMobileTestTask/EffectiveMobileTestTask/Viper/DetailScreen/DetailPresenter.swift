@@ -38,18 +38,26 @@ final class DetailPresenter: DetailPresenterInput {
 
 
 extension DetailPresenter: DetailViewOutput {
-    func popViewController(with task: Task) {
-        router.popViewController(with: task)
+    func presentAlert(with title: String, message: String) {
+        router.presentAlert(title, message)
+    }
+    
+    func updateTask(_ task: Task, uuid: UUID) {
+        interactor.updateTask(task, uuid: uuid)
+    }
+    
+    func popViewController(with task: Task, oldUUID: UUID) {
+        router.popViewController(with: task, oldUUID: oldUUID)
     }
     
     func saveTask(_ task: Task) {
-        // interactor save to db
+        interactor.addTask(task)
     }
 }
 
 extension DetailPresenter: DetailInteractorOutput {
     func didReciveError(_ error: String) {
-        //router alert
+        router.presentAlert("ошибка", error)
     }
 }
 

@@ -38,7 +38,10 @@ final class TaskPresenter: TaskPresenterInput {
 
 
 extension TaskPresenter: TaskViewOutput {
-    
+    func updateTask(with task: Task) {
+        interactor.updateTask(task)
+    }
+
     func openDetailScreen() {
         router.openDetailScreen()
     }
@@ -71,7 +74,7 @@ extension TaskPresenter: TaskInteractorOutput {
 }
 
 extension TaskPresenter: DetailRouterOutput {
-    func addTask(with task: Task) {
-        view.addTask(task)
+    func addTask(with task: Task, oldUUID: UUID) {
+        view.addTask(task, oldUUID: oldUUID)
     }
 }
