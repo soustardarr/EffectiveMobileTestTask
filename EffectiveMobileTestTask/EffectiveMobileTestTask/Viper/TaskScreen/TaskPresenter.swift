@@ -55,7 +55,7 @@ extension TaskPresenter: TaskViewOutput {
     }
     
     func shareTask(with task: Task) {
-        // interactor
+        router.presentActivityViewController(task)
     }
     
     func viewDidLoad() {

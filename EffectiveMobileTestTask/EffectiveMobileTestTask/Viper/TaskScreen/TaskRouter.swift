@@ -12,6 +12,7 @@ protocol TaskRouterInput {
     func openDetailScreen(with task: Task)
     func openDetailScreen()
     func presentAlert(_ text: String)
+    func presentActivityViewController(_ task: Task)
 }
 
 final class TaskRouter: TaskRouterInput {
@@ -34,5 +35,13 @@ final class TaskRouter: TaskRouterInput {
         let action = UIAlertAction(title: "OK", style: .default)
         alert.addAction(action)
         viewController?.present(alert, animated: true)
+    }
+
+    func presentActivityViewController(_ task: Task) {
+        let activity = UIActivityViewController(
+            activityItems: [ task.title, task.date ?? "", task.descriptionText ],
+            applicationActivities: []
+        )
+        viewController?.present(activity, animated: true)
     }
 }
